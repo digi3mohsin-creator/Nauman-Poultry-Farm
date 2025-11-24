@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>NAUMAN POULTRY FARM – Dhebar</title>
+
+<style>
+body { font-family: Arial; background:#f2f2f2; padding:10px; }
+h1 { text-align:center; background:#ffcc66; padding:15px; }
+table { border-collapse: collapse; width:100%; background:white; margin:15px 0; }
+th, td { border:1px solid #aaa; padding:6px; text-align:center; }
+th { background:#ffe0b3; }
+input { width:90px; text-align:center; }
+.summary { background:#ddffdd; padding:15px; font-size:15px; line-height:1.6; }
+</style>
+</head>
+
+<body>
+
+<h1>🐔 NAUMAN POULTRY FARM – DHEBAR</h1>
+<p style="text-align:center">
+Mobile: 7600786037 / 9714407262 / 9909879865 <br>
+Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
+</p>
+
+<!-- BASIC INFO -->
+<table>
+<tr>
+<td>Arrival Date</td>
+<td><input type="date" id="arrivalDate" onchange="setDates()"></td>
+<td>Total Chicks</td>
+<td><input type="number" id="totalChicks" value="2000" oninput="updateAll();updateChickCost()"></td>
+</tr>
+<tr>
+<td>Chicks Rate (₹)</td>
+<td><input id="chicksRate" value="35" oninput="updateChickCost()"></td>
+<td>Total Chicks Cost</td>
+<td>₹ <span id="totalChicksCost">0</span></td>
+</tr>
+</table>
+
+<!-- FEED RATE -->
+<h3>Feed Rate / Bag (50kg)</h3>
+<table>
+<tr>
+<th>Pre-Starter</th><th>Starter</th><th>Finisher</th>
+</tr>
+<tr>
+<td><input id="ratePreBag" value="1900" oninput="updateCosts()"></td>
+<td><input id="rateStarterBag" value="1750" oninput="updateCosts()"></td>
+<td><input id="rateFinisherBag" value="1600" oninput="updateCosts()"></td>
+</tr>
+</table>
+
+<!-- FEED STOCK -->
+<h3>Feed Stock</h3>
+<table>
+<tr>
+<th>Feed</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th>Bags</th><th>KG</th>
+</tr>
+
+<tr>
+<td>Pre-Starter</td>
+<td><input class="feed0" oninput="calcStock(0)"></td>
+<td><input class="feed0" oninput="calcStock(0)"></td>
+<td><input class="feed0" oninput="calcStock(0)"></td>
+<td><input class="feed0" oninput="calcStock(0)"></td>
+<td><input class="feed0" oninput="calcStock(0)"></td>
+<td id="bags0">0</td><td id="kg0">0</td>
+</tr>
+
+<tr>
+<td>Starter</td>
+<td><input class="feed1" oninput="calcStock(1)"></td>
+<td><input class="feed1" oninput="calcStock(1)"></td>
+<td><input class="feed1" oninput="calcStock(1)"></td>
+<td><input class="feed1" oninput="calcStock(1)"></td>
+<td><input class="feed1" oninput="calcStock(1)"></td>
+<td id="bags1">0</td><td id="kg1">0</td>
+</tr>
+
+<tr>
+<td>Finisher</td>
+<td><input class="feed2" oninput="calcStock(2)"></td>
+<td><input class="feed2" oninput="calcStock(2)"></td>
+<td><input class="feed2" oninput="calcStock(2)"></td>
+<td><input class="feed2" oninput="calcStock(2)"></td>
+<td><input class="feed2" oninput="calcStock(2)"></td>
+<td id="bags2">0</td><td id="kg2">0</td>
+</tr>
+</table>
+
+<!-- 50 DAYS RECORD -->
+<h3>50 Days Record</h3>
+<table id="dayTable">
+<tr>
+<th>Day</th><th>Date</th><th>Chicks</th><th>Death</th>
+<th>Available</th><th>Bags</th><th>Feed KG</th>
+<th>5 Wt</th><th>Avg</th><th>Total Wt</th>
+</tr>
+</table>
+
+<!-- EXPENSES -->
+<h3>Expenses (5 Column System)</h3>
+<table>
+<tr>
+<th>Type</th>
+<th>Slot1</th><th>Slot2</th><th>Slot3</th><th>Slot4</th><th>Slot5</th>
+<th>Total</th>
+</tr>
+
+<tr>
+<td>Medicine</td>
+<td><input class="exp1" oninput="updateExpenses()"></td>
+<td><input class="exp1" oninput="updateExpenses()"></td>
+<td><input class="exp1" oninput="updateExpenses()"></td>
+<td><input class="exp1" oninput="updateExpenses()"></td>
+<td><input class="exp1" oninput="updateExpenses()"></td>
+<td id="total1">0</td>
+</tr>
+
+<tr>
+<td>Vaccine</td>
+<td><input class="exp2" oninput="updateExpenses()"></td>
+<td><input class="exp2" oninput="updateExpenses()"></td>
+<td><input class="exp2" oninput="updateExpenses()"></td>
+<td><input class="exp2" oninput="updateExpenses()"></td>
+<td><input class="exp2" oninput="updateExpenses()"></td>
+<td id="total2">0</td>
+</tr>
+
+<tr>
+<td>Electricity</td>
+<td><input class="exp3" oninput="updateExpenses()"></td>
+<td><input class="exp3" oninput="updateExpenses()"></td>
+<td><input class="exp3" oninput="updateExpenses()"></td>
+<td><input class="exp3" oninput="updateExpenses()"></td>
+<td><input class="exp3" oninput="updateExpenses()"></td>
+<td id="total3">0</td>
+</tr>
+
+<tr>
+<td>Labour</td>
+<td><input class="exp4" oninput="updateExpenses()"></td>
+<td><input class="exp4" oninput="updateExpenses()"></td>
+<td><input class="exp4" oninput="updateExpenses()"></td>
+<td><input class="exp4" oninput="updateExpenses()"></td>
+<td><input class="exp4" oninput="updateExpenses()"></td>
+<td id="total4">0</td>
+</tr>
+
+<tr>
+<td>Other</td>
+<td><input class="exp5" oninput="updateExpenses()"></td>
+<td><input class="exp5" oninput="updateExpenses()"></td>
+<td><input class="exp5" oninput="updateExpenses()"></td>
+<td><input class="exp5" oninput="updateExpenses()"></td>
+<td><input class="exp5" oninput="updateExpenses()"></td>
+<td id="total5">0</td>
+</tr>
+
+<tr>
+<th colspan="6">Grand Total Extra Cost</th>
+<th>₹ <span id="extraCost">0</span></th>
+</tr>
+</table>
+
+<!-- ✅ SALE SECTION -->
+<h3>🐔 Sale Amount (20 Rows - Manual Entry)</h3>
+<table id="saleTable">
+<tr>
+<th>No</th>
+<th>Chicks</th>
+<th>Total Weight (KG)</th>
+<th>Rate / KG (₹)</th>
+<th>Total Sale Amount (₹)</th>
+</tr>
+</table>
+
+<table>
+<tr style="background:#f0ffe0;font-weight:bold;">
+<td colspan="4">Grand Total Sale Amount</td>
+<td>₹ <span id="saleGrandTotal">0</span></td>
+</tr>
+</table>
+
+<div class="summary">
+<b>Total Deaths:</b> <span id="totalDeaths">0</span><br>
+<b>Total Mortality %:</b> <span id="mortalityPct">0</span>%<br>
+<b>Final Chicks Available:</b> <span id="finalChicks">0</span><br>
+<b>Total Feed Used:</b> <span id="totalFeedKg">0</span> KG<br>
+<b>Average Weight on Day 50:</b> <span id="avgWtDay50">0</span> KG<br>
+<b>FCR (Feed Conversion Ratio):</b> <span id="fcr">0</span><br><br>
+
+<b>Total Feed Cost:</b> ₹ <span id="totalFeedCost">0</span><br>
+<b>Total Chicks Cost:</b> ₹ <span id="totalChicksCost2">0</span><br>
+<b>Extra Expenses:</b> ₹ <span id="extraCost2">0</span><br><br>
+
+<b>Total Selling:</b> ₹ <span id="totalSelling">0</span><br>
+<b>Profit / Loss:</b> ₹ <span id="profitLoss">0</span>
+</div>
+
+<script>
+/* ------------ CREATE 50 DAYS ------------ */
+let table = document.getElementById("dayTable");
+
+for(let i=1;i<=50;i++){
+ let row = table.insertRow();
+ row.innerHTML = `
+ <td>Day-${i}</td>
+ <td><input type="date"></td>
+ <td class="chicks">0</td>
+ <td><input class="death" oninput="updateAll()"></td>
+ <td class="available">0</td>
+ <td><input class="bags" oninput="updateAll()"></td>
+ <td class="feedkg">0</td>
+ <td><input class="wt5" oninput="updateAll()"></td>
+ <td class="avg">0</td>
+ <td class="estwt">0</td>`;
+}
+
+/* ------------ SALE TABLE ------------ */
+let saleTable = document.getElementById("saleTable");
+
+for(let i=1;i<=20;i++){
+ let row = saleTable.insertRow();
+ row.innerHTML = `
+ <td>${i}</td>
+ <td><input class="saleChicks" oninput="calcSale()"></td>
+ <td><input class="saleWeight" oninput="calcSale()"></td>
+ <td><input class="saleRate" oninput="calcSale()"></td>
+ <td class="saleTotal">0</td>`;
+}
+
+/* ------------ UPDATE DAILY ------------ */
+function updateAll(){
+ let start = Number(totalChicks.value)||0;
+ let available = start;
+ let totalDeath = 0;
+ let totalFeed = 0;
+ let lastAvg = 0;
+ let lastWeight = 0;
+
+ document.querySelectorAll("#dayTable tr").forEach((row,i)=>{
+   if(i===0) return;
+
+   let death = Number(row.querySelector(".death").value)||0;
+   let bags = Number(row.querySelector(".bags").value)||0;
+   let w5 = Number(row.querySelector(".wt5").value)||0;
+
+   row.querySelector(".chicks").innerText = available;
+   available -= death;
+   totalDeath += death;
+   if(available<0) available = 0;
+
+   row.querySelector(".available").innerText = available;
+   let feedKg = bags * 50;
+   totalFeed += feedKg;
+   row.querySelector(".feedkg").innerText = feedKg;
+
+   let avg = w5 > 0 ? w5/5 : 0;
+   row.querySelector(".avg").innerText = avg.toFixed(3);
+
+   let estW = avg * available;
+   row.querySelector(".estwt").innerText = estW.toFixed(2);
+
+   lastAvg = avg;
+   lastWeight = estW;
+ });
+
+ totalDeaths.innerText = totalDeath;
+ finalChicks.innerText = available;
+ totalFeedKg.innerText = totalFeed;
+ avgWtDay50.innerText = lastAvg.toFixed(3);
+
+ let mort = start>0 ? (totalDeath/start)*100 : 0;
+ mortalityPct.innerText = mort.toFixed(2);
+
+ let fcr = lastWeight>0 ? totalFeed/lastWeight : 0;
+ document.getElementById("fcr").innerText = fcr.toFixed(3);
+
+ calculateProfit();
+}
+
+/* ------------ FEED STOCK ------------ */
+function calcStock(n){
+ let sum = 0;
+ document.querySelectorAll(".feed"+n).forEach(x=>{
+   sum += Number(x.value)||0;
+ });
+
+ document.getElementById("bags"+n).innerText = sum;
+ document.getElementById("kg"+n).innerText = sum*50;
+
+ updateCosts();
+}
+
+/* ------------ FEED COST ------------ */
+function updateCosts(){
+ let cost =
+ (bags0.innerText * ratePreBag.value) +
+ (bags1.innerText * rateStarterBag.value) +
+ (bags2.innerText * rateFinisherBag.value);
+
+ totalFeedCost.innerText = cost.toFixed(2);
+ calculateProfit();
+}
+
+/* ------------ CHICKS COST ------------ */
+function updateChickCost(){
+ let total = totalChicks.value;
+ let rate = chicksRate.value;
+
+ let cost = total * rate;
+ totalChicksCost.innerText = cost;
+ totalChicksCost2.innerText = cost;
+
+ calculateProfit();
+}
+
+/* ------------ EXPENSES ------------ */
+function updateExpenses(){
+ let grand = 0;
+
+ for(let i=1;i<=5;i++){
+   let sum = 0;
+   document.querySelectorAll(".exp"+i).forEach(x=>{
+     sum += Number(x.value)||0;
+   });
+   document.getElementById("total"+i).innerText = sum;
+   grand += sum;
+ }
+
+ extraCost.innerText = grand;
+ extraCost2.innerText = grand;
+
+ calculateProfit();
+}
+
+/* ------------ SALE ------------ */
+function calcSale(){
+ let total = 0;
+
+ document.querySelectorAll("#saleTable tr").forEach((row,i)=>{
+   if(i===0) return;
+
+   let weight = Number(row.querySelector(".saleWeight").value)||0;
+   let rate = Number(row.querySelector(".saleRate").value)||0;
+
+   let amount = weight * rate;
+
+   row.querySelector(".saleTotal").innerText = amount.toFixed(2);
+   total += amount;
+ });
+
+ saleGrandTotal.innerText = total.toFixed(2);
+ totalSelling.innerText = total.toFixed(2);
+
+ calculateProfit();
+}
+
+/* ------------ PROFIT ------------ */
+function calculateProfit(){
+ let totalInvest =
+ Number(totalChicksCost2.innerText||0) +
+ Number(totalFeedCost.innerText||0) +
+ Number(extraCost.innerText||0);
+
+ let sale = Number(saleGrandTotal.innerText||0);
+
+ profitLoss.innerText = (sale - totalInvest).toFixed(2);
+}
+
+// Initial run
+updateChickCost();
+updateExpenses();
+updateCosts();
+calcSale();
+</script>
+
+</body>
+</html>
+<hr>
+<h2>📦 Batch Slot System</h2>
+
+<button onclick="saveBatch()">💾 Save This Batch</button>
+<select id="batchList" onchange="loadBatch()">
+<option value="">-- Select Previous Batch --</option>
+</select>
+
+<hr>
+
+<h2>📥 Report Download</h2>
+<button onclick="downloadPDF()">📄 Download PDF</button>
+<button onclick="downloadExcel()">📊 Download Excel</button>
+
+<script>
+// ----------- BATCH SLOT SYSTEM -----------
+function saveBatch(){
+ let batchName = prompt("Batch ka naam likho (example: Batch-1 / April / June2025)");
+ if(!batchName) return;
+
+ localStorage.setItem("batch_"+batchName, document.body.innerHTML);
+
+ let opt = document.createElement("option");
+ opt.value = batchName;
+ opt.text = batchName;
+ batchList.appendChild(opt);
+
+ alert("✅ Batch Saved Successfully!");
+}
+
+function loadBatch(){
+ let batchName = batchList.value;
+ if(!batchName) return;
+
+ let data = localStorage.getItem("batch_"+batchName);
+ document.body.innerHTML = data;
+}
+
+// Load saved batches automatically
+window.onload = function(){
+ for(let key in localStorage){
+  if(key.startsWith("batch_")){
+   let name = key.replace("batch_","");
+   let opt = document.createElement("option");
+   opt.value = name;
+   opt.text = name;
+   batchList.appendChild(opt);
+  }
+ }
+}
+</script>
+
+<script>
+// ----------- PDF DOWNLOAD -----------
+function downloadPDF(){
+ window.print();
+}
+</script>
+
+<script>
+// ----------- EXCEL DOWNLOAD -----------
+function downloadExcel(){
+ let tableHTML = document.body.outerHTML;
+
+ let data = `
+ <html xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel">
+ <head><meta charset="UTF-8"></head>
+ <body>${tableHTML}</body></html>
+ `;
+
+ let blob = new Blob([data], {type:"application/vnd.ms-excel"});
+ let link = document.createElement("a");
+ link.href = URL.createObjectURL(blob);
+ link.download = "poultry_report.xls";
+ link.click();
+}
+</script>

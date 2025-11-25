@@ -16,7 +16,29 @@ input { width:90px; text-align:center; }
 
 <body>
 
-<h1>🐔 NAUMAN POULTRY FARM – DHEBAR</h1>
+<!-- ================= BATCH / FARM PANEL ================= -->
+<div style="background:#fff3cd;padding:10px;margin-bottom:10px;text-align:center;">
+
+  <b>Farm / Batch :</b>
+
+  <select id="farmSelect" onchange="changeFarm()"></select>
+
+
+  <input type="text" id="newFarmName" placeholder="New Batch Name">
+
+  <button onclick="addFarm()">➕ Add</button>
+  <button onclick="renameFarm()">✏ Rename</button>
+  <button onclick="deleteFarm()">🗑 Delete</button>
+
+  <button onclick="saveFarm()">💾 Save</button>
+
+  <input type="file" id="importFile" style="display:none" onchange="importFarm(event)">
+  <button onclick="document.getElementById('importFile').click()">📥 Restore</button>
+  <button onclick="exportFarm()">📤 Backup</button>
+
+</div>
+
+<h1>🐔 NAUMAN POULTRY FARM DHEBAR</h1>
 <p style="text-align:center">
 Mobile: 7600786037 / 9714407262 / 9909879865 <br>
 Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
@@ -87,6 +109,12 @@ Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
 <td><input class="feed2" oninput="calcStock(2)"></td>
 <td id="bags2">0</td><td id="kg2">0</td>
 </tr>
+<tr style="background:#ffffcc;font-weight:bold;">
+  <td colspan="6">TOTAL</td>
+  <td id="grandBags">0</td>
+  <td id="grandKg">0</td>
+</tr>
+
 </table>
 
 <!-- 50 DAYS RECORD -->
@@ -98,6 +126,8 @@ Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
 <th>5 Wt</th><th>Avg</th><th>Total Wt</th>
 </tr>
 </table>
+
+
 
 <!-- EXPENSES -->
 <h3>Expenses (5 Column System)</h3>
@@ -162,10 +192,14 @@ Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
 <th colspan="6">Grand Total Extra Cost</th>
 <th>₹ <span id="extraCost">0</span></th>
 </tr>
+
 </table>
 
+
 <!-- ✅ SALE SECTION -->
-<h3>🐔 Sale Amount (20 Rows - Manual Entry)</h3>
+<h3>🐔 Sale Amount </h3>
+<button onclick="askPasswordAdd()">➕ Add Sale Row</button>
+<button onclick="askPasswordRemove()">➖ Remove Last Row</button>
 <table id="saleTable">
 <tr>
 <th>No</th>
@@ -188,7 +222,7 @@ Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
 <b>Total Mortality %:</b> <span id="mortalityPct">0</span>%<br>
 <b>Final Chicks Available:</b> <span id="finalChicks">0</span><br>
 <b>Total Feed Used:</b> <span id="totalFeedKg">0</span> KG<br>
-<b>Average Weight on Day 50:</b> <span id="avgWtDay50">0</span> KG<br>
+<b>Average Weight on Day :</b> <span id="avgWtDay50">0</span> KG<br>
 <b>FCR (Feed Conversion Ratio):</b> <span id="fcr">0</span><br><br>
 
 <b>Total Feed Cost:</b> ₹ <span id="totalFeedCost">0</span><br>
@@ -200,6 +234,7 @@ Address: Dhebar – Porbandar Road, Ta: Bhanvad, Dev Bhumi Dwarka
 </div>
 
 <script>
+let autoSaveInterval = null;  // ✅ IMPORTANT: autosave control variable
 /* ------------ CREATE 50 DAYS ------------ */
 let table = document.getElementById("dayTable");
 
@@ -217,11 +252,26 @@ for(let i=1;i<=50;i++){
  <td class="avg">0</td>
  <td class="estwt">0</td>`;
 }
+// ✅ TOTAL row automatically add
+let totalRow = table.insertRow();
+totalRow.style.background = "#ffffcc";
+totalRow.style.fontWeight = "bold";
+
+totalRow.innerHTML = `
+<td colspan="3">TOTAL</td>
+<td id="totalDeathTable">0</td>
+<td>-</td>
+<td id="totalBagsTable">0</td>
+<td id="totalFeedKgTable">0</td>
+<td colspan="3"></td>
+`;
+
+
 
 /* ------------ SALE TABLE ------------ */
 let saleTable = document.getElementById("saleTable");
 
-for(let i=1;i<=20;i++){
+for(let i=1;i<=10;i++){
  let row = saleTable.insertRow();
  row.innerHTML = `
  <td>${i}</td>
@@ -237,14 +287,18 @@ function updateAll(){
  let available = start;
  let totalDeath = 0;
  let totalFeed = 0;
+ let totalBags = 0;
  let lastAvg = 0;
  let lastWeight = 0;
 
- document.querySelectorAll("#dayTable tr").forEach((row,i)=>{
+ document.querySelectorAll("#dayTable tr:not(:last-child)").forEach((row,i)=>{
    if(i===0) return;
+
 
    let death = Number(row.querySelector(".death").value)||0;
    let bags = Number(row.querySelector(".bags").value)||0;
+totalBags += bags;
+
    let w5 = Number(row.querySelector(".wt5").value)||0;
 
    row.querySelector(".chicks").innerText = available;
@@ -253,6 +307,7 @@ function updateAll(){
    if(available<0) available = 0;
 
    row.querySelector(".available").innerText = available;
+
    let feedKg = bags * 50;
    totalFeed += feedKg;
    row.querySelector(".feedkg").innerText = feedKg;
@@ -263,14 +318,23 @@ function updateAll(){
    let estW = avg * available;
    row.querySelector(".estwt").innerText = estW.toFixed(2);
 
-   lastAvg = avg;
-   lastWeight = estW;
+   // ✅ Last filled day ka data lena
+   if(w5 > 0){
+     lastAvg = avg;
+     lastWeight = estW;
+   }
  });
 
  totalDeaths.innerText = totalDeath;
  finalChicks.innerText = available;
  totalFeedKg.innerText = totalFeed;
- avgWtDay50.innerText = lastAvg.toFixed(3);
+document.getElementById("totalDeathTable").innerText = totalDeath;
+document.getElementById("totalBagsTable").innerText = totalBags;
+document.getElementById("totalFeedKgTable").innerText = totalFeed;
+
+
+ // ✅ Ab 50 day ki jagah last filled day se show hoga
+ avgWtDay50.innerText = lastAvg.toFixed(3) + " (Last Filled Day)";
 
  let mort = start>0 ? (totalDeath/start)*100 : 0;
  mortalityPct.innerText = mort.toFixed(2);
@@ -283,16 +347,28 @@ function updateAll(){
 
 /* ------------ FEED STOCK ------------ */
 function calcStock(n){
- let sum = 0;
- document.querySelectorAll(".feed"+n).forEach(x=>{
-   sum += Number(x.value)||0;
- });
+  let sum = 0;
+  document.querySelectorAll(".feed"+n).forEach(x=>{
+    sum += Number(x.value)||0;
+  });
 
- document.getElementById("bags"+n).innerText = sum;
- document.getElementById("kg"+n).innerText = sum*50;
+  document.getElementById("bags"+n).innerText = sum;
+  document.getElementById("kg"+n).innerText = sum * 50;
 
- updateCosts();
+  // ✅ Grand total calculation
+  let totalBags =
+    Number(bags0.innerText) +
+    Number(bags1.innerText) +
+    Number(bags2.innerText);
+
+  let totalKg = totalBags * 50;
+
+  document.getElementById("grandBags").innerText = totalBags;
+  document.getElementById("grandKg").innerText = totalKg;
+
+  updateCosts();
 }
+
 
 /* ------------ FEED COST ------------ */
 function updateCosts(){
@@ -375,86 +451,454 @@ updateChickCost();
 updateExpenses();
 updateCosts();
 calcSale();
+function setDates(){
+
+  let arrival = document.getElementById("arrivalDate").value;
+  if(!arrival) return;
+
+  let startDate = new Date(arrival);
+
+  document.querySelectorAll("#dayTable tr:not(:last-child)").forEach((row, i) => {
+
+    
+    if(i === 0) return; // Header skip
+    
+    let dateInput = row.cells[1].querySelector("input");
+
+    let newDate = new Date(startDate);
+    newDate.setDate(startDate.getDate() + (i - 1));
+
+    let yyyy = newDate.getFullYear();
+    let mm = String(newDate.getMonth() + 1).padStart(2,'0');
+    let dd = String(newDate.getDate()).padStart(2,'0');
+
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  });
+}
+/* ================= SALE PASSWORD SYSTEM ================= */
+
+const SALE_PASSWORD = "1234";
+
+function askPasswordAdd(){
+  let pass = prompt("Sale row add karne ka password dalo:");
+  if(pass === SALE_PASSWORD){
+    addSaleRow();
+  } else {
+    alert("❌ Wrong Password!");
+  }
+}
+
+function askPasswordRemove(){
+  let pass = prompt("Sale row delete karne ka password dalo:");
+  if(pass === SALE_PASSWORD){
+    removeSaleRow();
+  } else {
+    alert("❌ Wrong Password!");
+  }
+}
+
+function addSaleRow(){
+  let table = document.getElementById("saleTable");
+  let rowCount = table.rows.length;
+
+  let row = table.insertRow();
+  row.innerHTML = `
+    <td>${rowCount}</td>
+    <td><input class="saleChicks" oninput="calcSale()"></td>
+    <td><input class="saleWeight" oninput="calcSale()"></td>
+    <td><input class="saleRate" oninput="calcSale()"></td>
+    <td class="saleTotal">0</td>
+  `;
+}
+
+function removeSaleRow(){
+  let table = document.getElementById("saleTable");
+  let rowCount = table.rows.length;
+
+  if(rowCount > 2){
+    table.deleteRow(rowCount - 1);
+  } else {
+    alert("❌ Minimum ek sale row rehni chahiye!");
+  }
+
+  calcSale();
+}
+/* ================= BATCH / FARM SYSTEM ================= */
+
+const FARM_PASSWORD = "1234";
+
+
+/* Load Farm List */
+function changeFarm(){
+  clearForm();       // ✅ pehle screen blank karega
+  loadFarmData();    // ✅ fir sirf saved data load karega
+}
+
+function loadFarmList(){
+
+  let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
+  let select = document.getElementById("farmSelect");
+  select.innerHTML = "";
+
+  list.forEach(name=>{
+    let opt = document.createElement("option");
+    opt.value = name;
+    opt.text = name;
+    select.appendChild(opt);
+  });
+
+  if(list.length > 0) loadFarmData();
+}
+
+/* Add Farm */
+function addFarm(){
+  let name = document.getElementById("newFarmName").value.trim();
+  if(name === "") return alert("Batch name likho!");
+
+  let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
+
+  if(list.includes(name)) return alert("Ye batch pehle se hai!");
+
+  list.push(name);
+  localStorage.setItem("FarmList", JSON.stringify(list));
+
+  document.getElementById("newFarmName").value = "";
+  loadFarmList();
+
+  alert("✅ Batch add ho gaya: " + name);
+}
+
+/* Save Farm Data */
+function saveFarm(showMessage = true){
+  let farm = farmSelect.value;
+  if(!farm){
+    if(showMessage) alert("Pehle batch select karo!");
+    return;
+  }
+
+  const data = {};
+
+  document.querySelectorAll("input, select").forEach((el, index) => {
+    data[index] = el.value;
+  });
+
+  localStorage.setItem("POULTRY_" + farm, JSON.stringify(data));
+
+  if(showMessage){
+    alert("✅ " + farm + " ka pura data save ho gaya!");
+  }
+}
+
+
+
+
+
+
+/* Load Farm Data */
+ function loadFarmData(){
+  stopAutoSave();  // 🔴 pehle autosave band karo
+
+  let farm = farmSelect.value;
+  if(!farm) return;
+
+  let saved = localStorage.getItem("POULTRY_" + farm);
+
+clearForm();   // ✅ HAMESHA pehle pura blank karega
+
+if(saved){
+  let data = JSON.parse(saved);
+
+document.querySelectorAll("input, select").forEach((el, index) => {
+  if(data[index] !== undefined){
+    el.value = data[index];
+  }
+});
+
+}
+
+
+
+  updateAll();
+  updateExpenses();
+  calcSale();
+  updateChickCost();
+  updateCosts();
+    // 🔥 Feed stock recalculation fix
+  calcStock(0);
+  calcStock(1);
+  calcStock(2);
+
+
+  startAutoSave();  // ✅ naya batch load hone ke baad autosave start
+}
+
+
+
+
+/* Export */
+function importFarm(event){
+
+  let file = event.target.files[0];
+  if(!file){
+    alert("File not selected");
+    return;
+  }
+
+  let cleanName = file.name
+    .replace(".json","")
+    .replace(/\s*\(\d+\)\s*$/,"")
+    .replace(/_?backup/i,"")
+    .replace(/-?\s*backup/i,"")
+    .trim();
+
+  let today = new Date();
+  let dd = String(today.getDate()).padStart(2,'0');
+  let mm = String(today.getMonth()+1).padStart(2,'0');
+  let yyyy = today.getFullYear();
+
+  let backupName = cleanName + "_backup_" + dd + "-" + mm + "-" + yyyy;
+
+  let reader = new FileReader();
+
+  reader.onload = function(){
+
+    let rawData = reader.result;
+
+    try {
+      JSON.parse(rawData); 
+    } catch(e){
+      alert("❌ File corrupt / JSON invalid");
+      return;
+    }
+
+    let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
+    let finalName = "";
+
+    // ✅ If original batch exists → overwrite
+    if(list.includes(cleanName)){
+      finalName = cleanName;
+    }
+    else{
+      finalName = backupName;
+      let i = 1;
+      while(list.includes(finalName)){
+        finalName = backupName + " (" + i + ")";
+        i++;
+      }
+      list.push(finalName);
+      localStorage.setItem("FarmList", JSON.stringify(list));
+    }
+
+    localStorage.setItem("POULTRY_" + finalName, rawData);
+
+    rebuildDropdown(finalName);
+
+    alert("✅ Restore Done\nBatch: " + finalName);
+  };
+
+  reader.readAsText(file);
+}
+
+
+function exportFarm(){
+
+  let farm = document.getElementById("farmSelect").value;
+
+  if(!farm){
+    alert("❌ Pehle batch select karo!");
+    return;
+  }
+
+  let data = localStorage.getItem("POULTRY_" + farm);
+
+  if(!data){
+    alert("❌ Is batch ka data save nahi hai!");
+    return;
+  }
+
+  try {
+
+    let blob = new Blob([data], { type: "application/json" });
+
+    let today = new Date();
+    let dd = String(today.getDate()).padStart(2,'0');
+    let mm = String(today.getMonth()+1).padStart(2,'0');
+    let yyyy = today.getFullYear();
+
+    let fileName = farm + "_backup_" + dd + "-" + mm + "-" + yyyy + ".json";
+
+    let link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert("✅ Backup Downloaded: " + fileName);
+
+  } catch(error){
+    console.error("Backup Error:", error);
+    alert("❌ Backup me error aaya, console check karo.");
+  }
+}
+
+/* Delete Farm */
+function deleteFarm(){
+
+  stopAutoSave();  // autosave band
+
+  let pass = prompt("Delete password dalo:");
+  if(pass !== FARM_PASSWORD){
+    alert("❌ Wrong password!");
+    startAutoSave();
+    return;
+  }
+
+  let farm = document.getElementById("farmSelect").value;
+
+  if(!farm){
+    alert("❌ Pehle batch select karo!");
+    startAutoSave();
+    return;
+  }
+
+  // ✅ Ab confirmation bhi 1234 hi hai
+  let confirmTxt = prompt("Delete confirm karne ke liye 1234 dalo:");
+
+  if(confirmTxt !== "1234"){
+    alert("❌ Confirmation galat hai!");
+    startAutoSave();
+    return;
+  }
+
+  // ✅ Yaha se actual delete start
+  localStorage.removeItem("POULTRY_" + farm);
+
+  let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
+  list = list.filter(item => item !== farm);
+  localStorage.setItem("FarmList", JSON.stringify(list));
+
+  document.getElementById("farmSelect").innerHTML = "";
+
+  clearForm();
+  loadFarmList();
+
+  alert("✅ Batch + data permanently delete ho gaya!");
+
+  startAutoSave();
+}
+
+
+/* Rename Farm */
+function renameFarm(){
+  let oldName = farmSelect.value;
+  let newName = document.getElementById("newFarmName").value.trim();
+
+  if(newName === "") return alert("New batch name likho!");
+
+  let data = localStorage.getItem("POULTRY_" + oldName);
+  let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
+
+  list = list.map(f => f === oldName ? newName : f);
+
+  localStorage.setItem("FarmList", JSON.stringify(list));
+  localStorage.setItem("POULTRY_" + newName, data);
+  localStorage.removeItem("POULTRY_" + oldName);
+
+  loadFarmList();
+  alert("✅ Batch rename ho gaya: " + newName);
+}
+
+
+/* ========= AUTO SAVE SYSTEM ========= */
+function startAutoSave(){
+  stopAutoSave();
+
+  autoSaveInterval = setInterval(function(){
+    let farm = farmSelect.value;
+    if(!farm) return;
+    saveFarm(false);   // silent save
+  }, 5000);
+}
+
+function stopAutoSave(){
+  if(autoSaveInterval){
+    clearInterval(autoSaveInterval);
+    autoSaveInterval = null;
+  }
+}
+
+
+
+/* Clear all inputs when switching to new empty batch */
+function clearForm(){
+
+  // ✅ saare input blank
+  document.querySelectorAll("input").forEach(el=>{
+    if(el.type !== "button" && el.type !== "file"){
+      el.value = "";
+    }
+  });
+
+  // ✅ saare span wale data blank
+  document.querySelectorAll("span").forEach(span=>{
+    span.innerText = "0";
+  });
+
+  // ✅ table ke calculated cells blank
+  document.querySelectorAll(
+    ".chicks, .available, .feedkg, .avg, .estwt, .saleTotal"
+  ).forEach(td => {
+    td.innerText = "0";
+  });
+}
+
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    loadFarmList();
+    startAutoSave();
+});
+function rebuildDropdown(selectedName){
+
+  let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
+  let select = document.getElementById("farmSelect");
+
+  if(!select){
+    console.error("farmSelect dropdown not found!");
+    return;
+  }
+
+  // Clear dropdown
+  select.innerHTML = "";
+
+  // Add all batch names
+  list.forEach(name => {
+    let opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+
+  // Try selecting imported batch
+  if(list.includes(selectedName)){
+    select.value = selectedName;
+  }
+  else if(select.options.length > 0){
+    // fallback → last batch
+    select.selectedIndex = select.options.length - 1;
+  }
+
+  // Load selected batch data
+  loadFarmData();
+}
+
 </script>
 
 </body>
 </html>
-<hr>
-<h2>📦 Batch Slot System</h2>
 
-<button onclick="saveBatch()">💾 Save This Batch</button>
-<select id="batchList" onchange="loadBatch()">
-<option value="">-- Select Previous Batch --</option>
-</select>
 
-<hr>
-
-<h2>📥 Report Download</h2>
-<button onclick="downloadPDF()">📄 Download PDF</button>
-<button onclick="downloadExcel()">📊 Download Excel</button>
-
-<script>
-// ----------- BATCH SLOT SYSTEM -----------
-function saveBatch(){
- let batchName = prompt("Batch ka naam likho (example: Batch-1 / April / June2025)");
- if(!batchName) return;
-
- localStorage.setItem("batch_"+batchName, document.body.innerHTML);
-
- let opt = document.createElement("option");
- opt.value = batchName;
- opt.text = batchName;
- batchList.appendChild(opt);
-
- alert("✅ Batch Saved Successfully!");
-}
-
-function loadBatch(){
- let batchName = batchList.value;
- if(!batchName) return;
-
- let data = localStorage.getItem("batch_"+batchName);
- document.body.innerHTML = data;
-}
-
-// Load saved batches automatically
-window.onload = function(){
- for(let key in localStorage){
-  if(key.startsWith("batch_")){
-   let name = key.replace("batch_","");
-   let opt = document.createElement("option");
-   opt.value = name;
-   opt.text = name;
-   batchList.appendChild(opt);
-  }
- }
-}
-</script>
-
-<script>
-// ----------- PDF DOWNLOAD -----------
-function downloadPDF(){
- window.print();
-}
-</script>
-
-<script>
-// ----------- EXCEL DOWNLOAD -----------
-function downloadExcel(){
- let tableHTML = document.body.outerHTML;
-
- let data = `
- <html xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel">
- <head><meta charset="UTF-8"></head>
- <body>${tableHTML}</body></html>
- `;
-
- let blob = new Blob([data], {type:"application/vnd.ms-excel"});
- let link = document.createElement("a");
- link.href = URL.createObjectURL(blob);
- link.download = "poultry_report.xls";
- link.click();
-}
-</script>
 

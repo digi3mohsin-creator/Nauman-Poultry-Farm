@@ -639,65 +639,37 @@ document.querySelectorAll("input, select").forEach((el, index) => {
 function importFarm(event){
 
   let file = event.target.files[0];
-  if(!file){
-    alert("File not selected");
-    return;
-  }
-
-  let cleanName = file.name
-    .replace(".json","")
-    .replace(/\s*\(\d+\)\s*$/,"")
-    .replace(/_?backup/i,"")
-    .replace(/-?\s*backup/i,"")
-    .trim();
-
-  let today = new Date();
-  let dd = String(today.getDate()).padStart(2,'0');
-  let mm = String(today.getMonth()+1).padStart(2,'0');
-  let yyyy = today.getFullYear();
-
-  let backupName = cleanName + "_backup_" + dd + "-" + mm + "-" + yyyy;
+  if(!file) return;
 
   let reader = new FileReader();
 
   reader.onload = function(){
 
-    let rawData = reader.result;
+    let data = JSON.parse(reader.result);
 
-    try {
-      JSON.parse(rawData); 
-    } catch(e){
-      alert("❌ File corrupt / JSON invalid");
-      return;
-    }
+    let cleanName = file.name
+      .replace(".json","")
+      .replace(/_backup.*/i,"")
+      .replace(/\s*\(\d+\)/,"")
+      .trim();
 
     let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
-    let finalName = "";
 
-    // ✅ If original batch exists → overwrite
-    if(list.includes(cleanName)){
-      finalName = cleanName;
-    }
-    else{
-      finalName = backupName;
-      let i = 1;
-      while(list.includes(finalName)){
-        finalName = backupName + " (" + i + ")";
-        i++;
-      }
-      list.push(finalName);
+    if(!list.includes(cleanName)){
+      list.push(cleanName);
       localStorage.setItem("FarmList", JSON.stringify(list));
     }
 
-    localStorage.setItem("POULTRY_" + finalName, rawData);
+    localStorage.setItem("POULTRY_" + cleanName, JSON.stringify(data));
 
-    rebuildDropdown(finalName);
+    rebuildDropdown(cleanName);
 
-    alert("✅ Restore Done\nBatch: " + finalName);
+    alert("✅ Restore ho gaya: " + cleanName);
   };
 
   reader.readAsText(file);
 }
+
 
 
 function exportFarm(){
@@ -712,36 +684,27 @@ function exportFarm(){
   let data = localStorage.getItem("POULTRY_" + farm);
 
   if(!data){
-    alert("❌ Is batch ka data save nahi hai!");
+    alert("❌ Is batch ka data save hi nahi hai!");
     return;
   }
 
-  try {
+  let blob = new Blob([data], {type:"application/json"});
 
-    let blob = new Blob([data], { type: "application/json" });
+  let date = new Date();
+  let dd = String(date.getDate()).padStart(2,"0");
+  let mm = String(date.getMonth()+1).padStart(2,"0");
+  let yyyy = date.getFullYear();
 
-    let today = new Date();
-    let dd = String(today.getDate()).padStart(2,'0');
-    let mm = String(today.getMonth()+1).padStart(2,'0');
-    let yyyy = today.getFullYear();
+  let filename = farm + "_backup_" + dd + "-" + mm + "-" + yyyy + ".json";
 
-    let fileName = farm + "_backup_" + dd + "-" + mm + "-" + yyyy + ".json";
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
 
-    let link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.download = fileName;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    alert("✅ Backup Downloaded: " + fileName);
-
-  } catch(error){
-    console.error("Backup Error:", error);
-    alert("❌ Backup me error aaya, console check karo.");
-  }
+  alert("✅ Backup ho gaya: " + filename);
 }
+
 
 /* Delete Farm */
 function deleteFarm(){
@@ -861,39 +824,31 @@ document.addEventListener("DOMContentLoaded", function() {
     loadFarmList();
     startAutoSave();
 });
+
 function rebuildDropdown(selectedName){
 
   let list = JSON.parse(localStorage.getItem("FarmList") || "[]");
   let select = document.getElementById("farmSelect");
 
-  if(!select){
-    console.error("farmSelect dropdown not found!");
-    return;
-  }
-
-  // Clear dropdown
   select.innerHTML = "";
 
-  // Add all batch names
   list.forEach(name => {
     let opt = document.createElement("option");
     opt.value = name;
     opt.textContent = name;
+
+    if(name === selectedName){
+      opt.selected = true;
+    }
+
     select.appendChild(opt);
   });
 
-  // Try selecting imported batch
-  if(list.includes(selectedName)){
-    select.value = selectedName;
-  }
-  else if(select.options.length > 0){
-    // fallback → last batch
-    select.selectedIndex = select.options.length - 1;
-  }
+  select.value = selectedName;
 
-  // Load selected batch data
-  loadFarmData();
+  changeFarm();
 }
+
 
 </script>
 
